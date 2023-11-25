@@ -1,0 +1,99 @@
+<!doctype html>
+<html>
+<head>
+    <title>Websocket test</title>
+</head>
+<body>
+<script>
+
+// var websocketIn = new WebSocket("ws://127.0.0.1:54321", "csound");
+var websocketOut = new WebSocket("ws://127.0.0.1:12345", "csound");
+
+const StringType = 1;
+const Float64ArrayType = 2;
+
+const sendBuffer = new ArrayBuffer(1024);
+const sendBuffer_asUint8s = new Uint8Array(sendBuffer);
+const sendBuffer_asUint32s = new Uint32Array(sendBuffer);
+const sendBuffer_asFloat64s = new Float64Array(sendBuffer);
+
+const textEncoder = new TextEncoder;
+const textDecoder = new TextDecoder;
+
+let i = 1;
+setInterval(() => {
+    if (websocketOut.readyState == WebSocket.OPEN) {
+        console.debug(`sending to protocol "csound" on paths "/test/1" and "/test/2" ...`);
+
+        for (let j = 0; j < 10; j++) {
+            const test1_path = "/test/1";
+            const test1_data = `test ${i}`;
+            let written = 0;
+
+            // Encode the path into the send buffer.
+            written = textEncoder.encodeInto(test1_path, sendBuffer_asUint8s).written;
+
+            // Add the path's null terminator.
+            sendBuffer_asUint8s[written++] = 0;
+
+            // Add the data type.
+            sendBuffer_asUint8s[written++] = StringType;
+
+            // Add the string data.
+            written += textEncoder.encodeInto(test1_data, sendBuffer_asUint8s.subarray(written++)).written;
+
+            // Add the string data's null terminator.
+            sendBuffer_asUint8s[written++] = 0;
+
+            // Send.
+            // console.debug(sendBuffer_asUint8s);
+            // console.debug(textDecoder.decode(sendBuffer));
+            websocketOut.send(sendBuffer);
+            sendBuffer_asUint8s.fill(0);
+
+
+            const test2_path = "/test/2";
+            const test2_data = [ i + i / 1000, i + i / 1000 + 1, i + i / 1000 + 2 ];
+
+            // Encode the path into the send buffer.
+            written = textEncoder.encodeInto(test2_path, sendBuffer_asUint8s).written;
+
+            // Add the path's null terminator.
+            sendBuffer_asUint8s[written++] = 0;
+
+            // Add the data type.
+            sendBuffer_asUint8s[written++] = Float64ArrayType;
+
+            // Advance the `written` index to the nearest multiple of 4 for the Uint32 array view.
+            written += (4 - (written % 4)) % 4;
+
+            // // Add the array length.
+            sendBuffer_asUint32s[written / 4] = test2_data.length;
+            written += 4;
+
+            // Advance the `written` index to the nearest multiple of 8 for the Float64 array view.
+            written += (8 - (written % 8)) % 8;
+
+            // Add the array data.
+            for (let i = 0; i < test2_data.length; i++) {
+                sendBuffer_asFloat64s[written / 8] = test2_data[i];
+                written += 8;
+            }
+
+            // Send.
+            // console.debug(sendBuffer_asUint8s);
+            // console.debug(textDecoder.decode(sendBuffer));
+            websocketOut.send(sendBuffer);
+            sendBuffer_asUint8s.fill(0);
+
+            i++;
+        }
+    }
+    else {
+        console.debug(`websocket "test" not connected`);
+    }
+}, 1000);
+
+</script>
+</body>
+</html>

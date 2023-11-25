@@ -1,0 +1,26 @@
+{
+  "configurations": [
+    {
+      "name": "test.csd",
+      "type": "cppdbg",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "program": "/usr/local/bin/csound",
+      "args": ["-odac", "test/test.csd"],
+      "stopAtEntry": false,
+      "MIMode": "lldb",
+      "preLaunchTask": "Build and install"
+    },
+    {
+      "name": "Reaper",
+      "type": "cppdbg",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "program": "/Applications/REAPER64.app/Contents/MacOS/REAPER",
+      "stopAtConnect": false,
+      "stopAtEntry": false,
+      "MIMode": "lldb",
+      "preLaunchTask": "Build and install"
+    }
+  ]
+}

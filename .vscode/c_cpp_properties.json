@@ -1,0 +1,23 @@
+{
+  "env": {
+    "macOS_includePath": [
+      "/Users/andy/Library/Frameworks/CsoundLib64.framework/Headers",
+      "${workspaceFolder}/.build/vcpkg_installed/arm64-osx/include"
+    ]
+  },
+  "configurations": [
+    {
+      "name": "macOS",
+      "compilerPath": "/usr/bin/clang",
+      "intelliSenseMode": "macos-clang-x64",
+      "includePath": ["${macOS_includePath}"],
+      "cStandard": "c99",
+      "macFrameworkPath": ["/System/Library/Frameworks", "/Library/Frameworks"],
+      "browse": {
+        "path": ["${macOS_includePath}", "${workspaceFolder}"]
+      }
+    }
+  ],
+  "version": 4,
+  "enableConfigurationSquiggles": true
+}
