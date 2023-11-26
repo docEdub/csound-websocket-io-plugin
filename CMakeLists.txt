@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.14)
 
-include("cmake/csound.cmake")
+include("cmake/csound-plugin.cmake")
 
 project(csound-websocket-io-plugin)
 
