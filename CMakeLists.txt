@@ -2,7 +2,13 @@
 # See https://cmake.org/cmake/help/v3.24/variable/CMAKE_PROJECT_TOP_LEVEL_INCLUDES.html.
 cmake_minimum_required(VERSION 3.24)
 
-add_subdirectory(CMakeCsoundPlugin)
+include("cmake/fetch-dependency.cmake")
+
+fetch_dependency(
+    NAME CMakeCsoundPlugin
+    URL https://github.com/docEdub/CMakeCsoundPlugin/archive/refs/tags/2023.11.25.tar.gz
+    URL_MD5 799b658f4067c0f67e9c0a9193786f08
+)
 
 project(csound-websocket-io-plugin)
 
