@@ -2,7 +2,7 @@
 # See https://cmake.org/cmake/help/v3.24/variable/CMAKE_PROJECT_TOP_LEVEL_INCLUDES.html.
 cmake_minimum_required(VERSION 3.24)
 
-include("cmake/fetch-dependency.cmake")
+include("cmake/fetch_dependency.cmake")
 
 fetch_dependency(
     NAME CMakeCsoundPlugin
