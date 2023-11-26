@@ -1,6 +1,8 @@
-cmake_minimum_required(VERSION 3.14)
+# CMake 3.24 is required for CMAKE_PROJECT_TOP_LEVEL_INCLUDES used in CMakeCsoundPlugin.
+# See https://cmake.org/cmake/help/v3.24/variable/CMAKE_PROJECT_TOP_LEVEL_INCLUDES.html.
+cmake_minimum_required(VERSION 3.24)
 
-include("cmake/csound-plugin.cmake")
+add_subdirectory(CMakeCsoundPlugin)
 
 project(csound-websocket-io-plugin)
 

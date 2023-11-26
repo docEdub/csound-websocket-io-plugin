@@ -1,8 +1,6 @@
 include_guard()
 
-include("cmake/vcpkg.cmake")
-
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules")
+list(APPEND CMAKE_MODULE_PATH "${CMakeCsoundPlugin_DIR}/Modules")
 
 find_package(CSOUND)
 
@@ -53,7 +51,7 @@ endfunction()
 macro(add_csound_plugin)
     cmake_parse_arguments(ARG "" "TARGET" "SOURCES;LIBRARIES" ${ARGN})
 
-    include("cmake/config.cmake")
+    include("${CMakeCsoundPlugin_DIR}/config.cmake")
 
     add_shared_library(TARGET ${ARG_TARGET} SOURCES ${ARG_SOURCES} LIBRARIES ${ARG_LIBRARIES})
 
