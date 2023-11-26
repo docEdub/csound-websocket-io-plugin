@@ -1,5 +1,7 @@
 include_guard()
 
+include("cmake/vcpkg.cmake")
+
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/Modules")
 
 find_package(CSOUND)
@@ -48,8 +50,10 @@ function(add_shared_library)
 endfunction()
 
 # Adds the given `TARGET` with the given `SOURCES` and `LIBRARIES` to the build as a Csound plugin.
-function(add_csound_plugin)
+macro(add_csound_plugin)
     cmake_parse_arguments(ARG "" "TARGET" "SOURCES;LIBRARIES" ${ARGN})
+
+    include("cmake/config.cmake")
 
     add_shared_library(TARGET ${ARG_TARGET} SOURCES ${ARG_SOURCES} LIBRARIES ${ARG_LIBRARIES})
 
@@ -62,4 +66,4 @@ function(add_csound_plugin)
     )
 
     install(TARGETS ${ARG_TARGET} LIBRARY DESTINATION "${CSOUND_PLUGINS_DIR}")
-endfunction()
+endmacro()
