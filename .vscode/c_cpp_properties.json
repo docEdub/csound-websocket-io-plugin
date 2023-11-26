@@ -9,7 +9,7 @@
     {
       "name": "macOS",
       "compilerPath": "/usr/bin/clang",
-      "intelliSenseMode": "macos-clang-x64",
+      "intelliSenseMode": "macos-clang-arm64",
       "includePath": ["${macOS_includePath}"],
       "cStandard": "c99",
       "macFrameworkPath": ["/System/Library/Frameworks", "/Library/Frameworks"],
