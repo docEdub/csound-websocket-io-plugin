@@ -33,7 +33,7 @@ static SharedWebsocketData *WS_getSharedData(CSOUND *csound)
     return shared;
 }
 
-char *initPortKeyString(MYFLT port, PortKey *portKey)
+static char *initPortKeyString(MYFLT port, PortKey *portKey)
 {
     portKey->port = port;
     portKey->nullTerminator = 0;
@@ -205,7 +205,7 @@ static int32_t WS_callback(
     return OK;
 }
 
-uintptr_t WS_processThread(void *vws)
+static uintptr_t WS_processThread(void *vws)
 {
     Websocket *ws = vws;
     ws->isRunning = true;
@@ -217,7 +217,7 @@ uintptr_t WS_processThread(void *vws)
     return 0;
 }
 
-Websocket *WS_initWebsocket(CSOUND *csound, MYFLT port, char *portKey)
+static Websocket *WS_initWebsocket(CSOUND *csound, MYFLT port, char *portKey)
 {
     Websocket *ws = NULL;
 
