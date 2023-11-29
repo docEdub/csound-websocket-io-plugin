@@ -9,9 +9,7 @@ typedef struct WS_set
     MYFLT *port;
     STRINGDAT *path;
     void *input; // STRINGDAT* or ARRAYDAT*
-    PortKey portKey;
-    CSOUND *csound;
-    Websocket *websocket;
+    WS_common common;
 } WS_set;
 
 int32_t websocket_set_init(CSOUND *csound, WS_set *p);

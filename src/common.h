@@ -37,8 +37,10 @@ typedef struct WebsocketPath {
 
 typedef struct Websocket {
     CSOUND *csound;
-    CS_HASH_TABLE *pathFloatsHashTable; // key = path string, value = WebsocketPath containing a MYFLT array.
-    CS_HASH_TABLE *pathStringHashTable; // key = path string, value = WebsocketPath containing a string
+    CS_HASH_TABLE *pathGetFloatsHashTable; // key = path string, value = WebsocketPath containing a MYFLT array.
+    CS_HASH_TABLE *pathGetStringHashTable; // key = path string, value = WebsocketPath containing a string
+    CS_HASH_TABLE *pathSetFloatsHashTable; // key = path string, value = WebsocketPath containing a MYFLT array.
+    CS_HASH_TABLE *pathSetStringHashTable; // key = path string, value = WebsocketPath containing a string
     int refCount;
     struct lws_context *context;
     struct lws_protocols *protocols;
@@ -54,12 +56,16 @@ typedef struct {
     CS_HASH_TABLE *portWebsocketHashTable; // key = port float as string, value = Websocket
 } SharedWebsocketData;
 
+typedef struct {
+    PortKey portKey;
+    CSOUND *csound;
+    Websocket *websocket;
+} WS_common;
+
 void initPlugin();
 void initPortKey(PortKey *portKey, MYFLT port);
 
+Websocket *createWebsocket(CSOUND *csound, int port, WS_common *p);
 void destroyWebsocket(CSOUND *csound, Websocket *ws);
-
-int32_t resetSharedData(CSOUND *csound, void *vshared);
-SharedWebsocketData *getSharedData(CSOUND *csound);
 
 #endif
