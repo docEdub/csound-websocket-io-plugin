@@ -13,6 +13,28 @@ const char *SharedWebsocketDataGlobalVariableName;
 const int WebsocketBufferCount;
 const int WebsocketInitialMessageSize;
 
+enum {
+    StringType = 1,
+    Float64ArrayType = 2
+};
+
+typedef struct PortKey
+{
+    MYFLT port;
+    int nullTerminator;
+} PortKey;
+
+typedef struct WebsocketMessage {
+    char *buffer;
+    size_t size;
+} WebsocketMessage;
+
+typedef struct WebsocketPath {
+    int messageIndex;
+    void *messageIndexCircularBuffer;
+    WebsocketMessage messages[];
+} WebsocketPath;
+
 typedef struct Websocket {
     CSOUND *csound;
     CS_HASH_TABLE *pathFloatsHashTable; // key = path string, value = WebsocketPath containing a MYFLT array.
@@ -28,25 +50,16 @@ typedef struct Websocket {
     bool isRunning;
 } Websocket;
 
-typedef struct WebsocketMessage {
-    char *buffer;
-    size_t size;
-} WebsocketMessage;
-
-typedef struct WebsocketPath {
-    int messageIndex;
-    void *messageIndexCircularBuffer;
-    WebsocketMessage messages[];
-} WebsocketPath;
-
-typedef struct PortKey
-{
-    MYFLT port;
-    int nullTerminator;
-} PortKey;
+typedef struct {
+    CS_HASH_TABLE *portWebsocketHashTable; // key = port float as string, value = Websocket
+} SharedWebsocketData;
 
 void initPlugin();
+void initPortKey(PortKey *portKey, MYFLT port);
 
-void WS_deinitWebsocket(CSOUND *csound, Websocket *ws);
+void destroyWebsocket(CSOUND *csound, Websocket *ws);
+
+int32_t resetSharedData(CSOUND *csound, void *vshared);
+SharedWebsocketData *getSharedData(CSOUND *csound);
 
 #endif

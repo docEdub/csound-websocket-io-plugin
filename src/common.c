@@ -17,7 +17,21 @@ void initPlugin()
     isPluginInitialized = true;
 }
 
-void WS_deinitPathHashTable(CSOUND *csound, CS_HASH_TABLE *pathHashTable)
+void initPortKey(PortKey *portKey, MYFLT port)
+{
+    memset(portKey, 0, sizeof(PortKey));
+
+    portKey->port = port;
+
+    char *s = (char*)(&portKey->port);
+    for (size_t i = 0; i < sizeof(MYFLT); i++) {
+        if (s[i] == 0) {
+            s[i] = '~';
+        }
+    }
+}
+
+void destroyPathHashTable(CSOUND *csound, CS_HASH_TABLE *pathHashTable)
 {
     CONS_CELL *pathItem = csound->GetHashTableValues(csound, pathHashTable);
     while (pathItem) {
@@ -38,7 +52,7 @@ void WS_deinitPathHashTable(CSOUND *csound, CS_HASH_TABLE *pathHashTable)
     csound->DestroyHashTable(csound, pathHashTable);
 }
 
-void WS_deinitWebsocket(CSOUND *csound, Websocket *ws)
+void destroyWebsocket(CSOUND *csound, Websocket *ws)
 {
     ws->refCount--;
     if (0 < ws->refCount) {
@@ -52,10 +66,34 @@ void WS_deinitWebsocket(CSOUND *csound, Websocket *ws)
 
     lws_context_destroy(ws->context);
 
-    WS_deinitPathHashTable(csound, ws->pathFloatsHashTable);
-    WS_deinitPathHashTable(csound, ws->pathStringHashTable);
+    destroyPathHashTable(csound, ws->pathFloatsHashTable);
+    destroyPathHashTable(csound, ws->pathStringHashTable);
 
     csound->Free(csound, ws->receiveBuffer);
     csound->Free(csound, ws->protocols);
     csound->Free(csound, ws);
+}
+
+int32_t resetSharedData(CSOUND *csound, void *vshared)
+{
+    SharedWebsocketData *shared = vshared;
+    csound->DestroyHashTable(csound, shared->portWebsocketHashTable);
+    csound->DestroyGlobalVariable(csound, SharedWebsocketDataGlobalVariableName);
+    return OK;
+}
+
+SharedWebsocketData *getSharedData(CSOUND *csound)
+{
+    SharedWebsocketData *shared = csound->QueryGlobalVariable(csound, SharedWebsocketDataGlobalVariableName);
+    if (shared) {
+        return shared;
+    }
+    csound->CreateGlobalVariable(csound, SharedWebsocketDataGlobalVariableName, sizeof(SharedWebsocketData));
+    shared = csound->QueryGlobalVariable(csound, SharedWebsocketDataGlobalVariableName);
+    if (!shared) {
+        csound->ErrorMsg(csound, "Websocket: failed to allocate globals");
+    }
+    shared->portWebsocketHashTable = csound->CreateHashTable(csound);
+    csound->RegisterResetCallback(csound, shared, resetSharedData);
+    return shared;
 }
