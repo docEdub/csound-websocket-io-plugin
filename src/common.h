@@ -29,18 +29,18 @@ typedef struct WebsocketMessage {
     size_t size;
 } WebsocketMessage;
 
-typedef struct WebsocketPath {
+typedef struct WebsocketPathData {
     int messageIndex;
     void *messageIndexCircularBuffer;
     WebsocketMessage messages[];
-} WebsocketPath;
+} WebsocketPathData;
 
 typedef struct Websocket {
     CSOUND *csound;
-    CS_HASH_TABLE *pathGetFloatsHashTable; // key = path string, value = WebsocketPath containing a MYFLT array.
-    CS_HASH_TABLE *pathGetStringHashTable; // key = path string, value = WebsocketPath containing a string
-    CS_HASH_TABLE *pathSetFloatsHashTable; // key = path string, value = WebsocketPath containing a MYFLT array.
-    CS_HASH_TABLE *pathSetStringHashTable; // key = path string, value = WebsocketPath containing a string
+    CS_HASH_TABLE *pathGetFloatsHashTable; // key = path string, value = WebsocketPatData containing a MYFLT array.
+    CS_HASH_TABLE *pathGetStringHashTable; // key = path string, value = WebsocketPatData containing a string
+    CS_HASH_TABLE *pathSetFloatsHashTable; // key = path string, value = WebsocketPatData containing a MYFLT array.
+    CS_HASH_TABLE *pathSetStringHashTable; // key = path string, value = WebsocketPatData containing a string
     int refCount;
     struct lws_context *context;
     struct lws_protocols *protocols;
@@ -67,5 +67,7 @@ void initPortKey(PortKey *portKey, MYFLT port);
 
 Websocket *getWebsocket(CSOUND *csound, int port, WS_common *p);
 void releaseWebsocket(CSOUND *csound, Websocket *ws);
+
+WebsocketPathData *getWebsocketPathData(CSOUND *csound, CS_HASH_TABLE *pathHashTable, char *path);
 
 #endif
