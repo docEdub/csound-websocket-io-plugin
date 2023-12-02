@@ -65,7 +65,7 @@ typedef struct {
 void initPlugin();
 void initPortKey(PortKey *portKey, MYFLT port);
 
-Websocket *createWebsocket(CSOUND *csound, int port, WS_common *p);
-void destroyWebsocket(CSOUND *csound, Websocket *ws);
+Websocket *getWebsocket(CSOUND *csound, int port, WS_common *p);
+void releaseWebsocket(CSOUND *csound, Websocket *ws);
 
 #endif

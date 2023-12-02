@@ -243,7 +243,7 @@ void initPortKey(PortKey *portKey, MYFLT port)
     }
 }
 
-Websocket *createWebsocket(CSOUND *csound, int port, WS_common *p)
+Websocket *getWebsocket(CSOUND *csound, int port, WS_common *p)
 {
     Websocket *ws = NULL;
 
@@ -290,7 +290,7 @@ Websocket *createWebsocket(CSOUND *csound, int port, WS_common *p)
     return ws;
 }
 
-void destroyWebsocket(CSOUND *csound, Websocket *ws)
+void releaseWebsocket(CSOUND *csound, Websocket *ws)
 {
     ws->refCount--;
     if (0 < ws->refCount) {

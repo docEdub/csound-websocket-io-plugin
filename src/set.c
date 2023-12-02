@@ -3,7 +3,7 @@
 int32_t websocket_set_destroy(CSOUND *csound, void *vp)
 {
     WS_set *p = vp;
-    destroyWebsocket(csound, p->common.websocket);
+    releaseWebsocket(csound, p->common.websocket);
     return OK;
 }
 
@@ -14,7 +14,7 @@ int32_t websocket_set_init(CSOUND *csound, WS_set *p)
     p->common.csound = csound;
 
     initPortKey(&p->common.portKey, *p->port);
-    p->common.websocket = createWebsocket(csound, *p->port, &p->common);
+    p->common.websocket = getWebsocket(csound, *p->port, &p->common);
 
     csound->RegisterDeinitCallback(csound, p, websocket_set_destroy);
 
