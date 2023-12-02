@@ -52,7 +52,7 @@ int32_t onWebsocketReceive(struct lws *websocket, void *inputData, size_t inputD
         d += pathLength + 1;
 
         // Get the data type. It should be either 1 or 2 for string or doubles array.
-        const int type = *d;
+        const int8_t type = *d;
         // csound->Message(csound, Str("type = %d, "), type);
         d++;
 
@@ -89,7 +89,7 @@ int32_t onWebsocketReceive(struct lws *websocket, void *inputData, size_t inputD
             return OK;
         }
 
-        WebsocketMessage *msg = &pathData->messages[pathData->messageIndex];
+        WebsocketMessage *msg = pathData->messages + pathData->messageIndex;
 
         if (0 < msg->size && msg->size < bufferSize) {
             csound->Free(csound, msg->buffer);
@@ -163,9 +163,9 @@ int32_t websocket_getArray_perf(CSOUND *csound, WS_get *p) {
                 continue;
             }
 
-            MYFLT *d = (MYFLT*) pathData->messages[messageIndex].buffer;
-
-            size_t size = pathData->messages[messageIndex].size;
+            WebsocketMessage *msg = pathData->messages + messageIndex;
+            MYFLT *d = (MYFLT*) msg->buffer;
+            size_t size = msg->size;
             size_t arrayLength = size / 4;
             if (output->allocated < arrayLength) {
                 csound->Free(csound, output->data);

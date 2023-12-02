@@ -12,8 +12,8 @@ static void sendWebsocketPathData(CSOUND *csound, struct lws *websocket, Websock
                 continue;
             }
 
-            WebsocketMessage *message = pathData->messages + messageIndex;
-            lws_write(websocket, (unsigned char *)message->buffer, message->size, LWS_WRITE_BINARY);
+            WebsocketMessage *msg = pathData->messages + messageIndex;
+            lws_write(websocket, (unsigned char*) msg->buffer, msg->size, LWS_WRITE_BINARY);
         }
         else {
             break;
@@ -70,7 +70,7 @@ int32_t websocket_setArray_perf(CSOUND *csound, WS_set *p) {
     const Websocket *const ws = p->common.websocket;
 
     // TODO: Write websocket data to path's message buffer and update messageIndex circular buffer.
-    (void)ws;
+    IGN(ws);
 
     return OK;
 }
@@ -81,7 +81,7 @@ int32_t websocket_setString_perf(CSOUND *csound, WS_set *p) {
     const Websocket *const ws = p->common.websocket;
 
     // TODO: Write websocket data to path's message buffer and update messageIndex circular buffer.
-    (void)ws;
+    IGN(ws);
 
     return OK;
 }
