@@ -166,11 +166,10 @@ int32_t websocket_getArray_perf(CSOUND *csound, WS_get *p) {
             WebsocketMessage *msg = pathData->messages + messageIndex;
             MYFLT *d = (MYFLT*) msg->buffer;
             size_t size = msg->size;
-            size_t arrayLength = size / 4;
-            if (output->allocated < arrayLength) {
+            if (output->allocated < size) {
                 csound->Free(csound, output->data);
                 output->data = csound->Malloc(csound, 2 * size);
-                output->allocated = 2 * arrayLength;
+                output->allocated = 2 * size;
             }
             memcpy(output->data, d, size);
         }

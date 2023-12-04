@@ -37,10 +37,10 @@ typedef struct WebsocketPathData {
 
 typedef struct Websocket {
     CSOUND *csound;
-    CS_HASH_TABLE *pathGetFloatsHashTable; // key = path string, value = WebsocketPatData containing a MYFLT array.
-    CS_HASH_TABLE *pathGetStringHashTable; // key = path string, value = WebsocketPatData containing a string
-    CS_HASH_TABLE *pathSetFloatsHashTable; // key = path string, value = WebsocketPatData containing a MYFLT array.
-    CS_HASH_TABLE *pathSetStringHashTable; // key = path string, value = WebsocketPatData containing a string
+    CS_HASH_TABLE *pathGetFloatsHashTable; // key = path string, value = WebsocketPathData containing a MYFLT array.
+    CS_HASH_TABLE *pathGetStringHashTable; // key = path string, value = WebsocketPathData containing a string
+    CS_HASH_TABLE *pathSetFloatsHashTable; // key = path string, value = WebsocketPathData containing a MYFLT array.
+    CS_HASH_TABLE *pathSetStringHashTable; // key = path string, value = WebsocketPathData containing a string
     int refCount;
     struct lws_context *context;
     struct lws_protocols *protocols;

@@ -44,7 +44,7 @@ endin
 
 instr 2
     SValue1 init "1"
-    kValue2[] init 3
+    kValue2[] = fillarray(1, 2, 3)
 
     websocket_set(54321, "/test/1", SValue1)
     websocket_set(54321, "/test/2", kValue2)
@@ -53,7 +53,7 @@ endin
 </CsInstruments>
 <CsScore>
 
-i1 0 z
+; i1 0 z
 i2 0 z
 
 </CsScore>

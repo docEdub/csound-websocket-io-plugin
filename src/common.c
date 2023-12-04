@@ -91,6 +91,7 @@ static uintptr_t processThread(void *vws)
 
     while (ws->isRunning) {
         lws_service(ws->context, 0);
+        lws_callback_on_writable_all_protocol(ws->context, &ws->protocols[0]);
     }
 
     return 0;
@@ -134,8 +135,10 @@ Websocket *getWebsocket(CSOUND *csound, int port, WS_common *p)
 
     ws = csound->Calloc(csound, sizeof(Websocket));
     ws->csound = csound;
-    ws->pathGetStringHashTable = csound->CreateHashTable(csound);
     ws->pathGetFloatsHashTable = csound->CreateHashTable(csound);
+    ws->pathGetStringHashTable = csound->CreateHashTable(csound);
+    ws->pathSetFloatsHashTable = csound->CreateHashTable(csound);
+    ws->pathSetStringHashTable = csound->CreateHashTable(csound);
     ws->refCount = 1;
 
     csound->SetHashTableValue(csound, shared->portWebsocketHashTable, (char*)&p->portKey, ws);
@@ -180,10 +183,10 @@ void releaseWebsocket(CSOUND *csound, Websocket *ws)
 
     lws_context_destroy(ws->context);
 
-    destroyWebsocketPathHashTable(csound, ws->pathGetFloatsHashTable);
+    destroyWebsocketPathHashTable(csound, ws->pathSetStringHashTable);
+    destroyWebsocketPathHashTable(csound, ws->pathSetFloatsHashTable);
     destroyWebsocketPathHashTable(csound, ws->pathGetStringHashTable);
-    destroyWebsocketPathHashTable(csound, ws->pathSetStringHashTable);
-    destroyWebsocketPathHashTable(csound, ws->pathSetStringHashTable);
+    destroyWebsocketPathHashTable(csound, ws->pathGetFloatsHashTable);
 
     csound->Free(csound, ws->receiveBuffer);
     csound->Free(csound, ws->protocols);
