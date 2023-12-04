@@ -208,3 +208,20 @@ WebsocketPathData *getWebsocketPathData(CSOUND *csound, CS_HASH_TABLE *pathHashT
 
     return pathData;
 }
+
+void writeWebsocketPathDataMessageIndex(CSOUND *csound, WebsocketPathData *pathData)
+{
+    while (true) {
+        int written = csound->WriteCircularBuffer(csound, pathData->messageIndexCircularBuffer, &pathData->messageIndex, 1);
+        if (written != 0) {
+            break;
+        }
+
+        // Message buffer is full. Read 1 item from it to free up room for the new message index.
+        int unused;
+        csound->ReadCircularBuffer(csound, pathData->messageIndexCircularBuffer, &unused, 1);
+    }
+
+    pathData->messageIndex++;
+    pathData->messageIndex %= WebsocketBufferCount;
+}

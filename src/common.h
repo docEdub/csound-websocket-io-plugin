@@ -69,5 +69,6 @@ Websocket *getWebsocket(CSOUND *csound, int port, WS_common *p);
 void releaseWebsocket(CSOUND *csound, Websocket *ws);
 
 WebsocketPathData *getWebsocketPathData(CSOUND *csound, CS_HASH_TABLE *pathHashTable, char *path);
+void writeWebsocketPathDataMessageIndex(CSOUND *csound, WebsocketPathData *pathData);
 
 #endif

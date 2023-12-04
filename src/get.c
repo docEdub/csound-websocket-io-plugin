@@ -101,20 +101,7 @@ int32_t onWebsocketReceive(struct lws *websocket, void *inputData, size_t inputD
         }
         memcpy(msg->buffer, d, bufferSize);
 
-        while (true) {
-            int written = csound->WriteCircularBuffer(csound, pathData->messageIndexCircularBuffer, &pathData->messageIndex, 1);
-            if (written != 0) {
-                break;
-            }
-
-            // Message buffer is full. Read 1 item from it to free up room for the incoming message.
-            // csound->Message(csound, Str("WARNING: port %d path %s message buffer full\n"), ws->info.port, path);
-            int index;
-            csound->ReadCircularBuffer(csound, pathData->messageIndexCircularBuffer, &index, 1);
-        }
-
-        pathData->messageIndex++;
-        pathData->messageIndex %= WebsocketBufferCount;
+        writeWebsocketPathDataMessageIndex(csound, pathData);
     }
 
     return OK;
