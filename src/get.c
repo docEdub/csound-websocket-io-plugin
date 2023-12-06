@@ -61,12 +61,10 @@ int32_t onWebsocketReceive(struct lws *websocket, void *inputData, size_t inputD
 
         // Write the data to the path's messages circular buffer.
         if (Float64ArrayType == type) {
-            d += (4 - ((d - data) % 4)) % 4;
             const uint32_t *length = (uint32_t*)d;
             d += 4;
             // csound->Message(csound, Str("length = %d, "), *length);
 
-            d += (8 - ((d - data) % 8)) % 8;
             // const double *values = (double*)d;
             // csound->Message(csound, Str("data = %s"), "[ ");
             // csound->Message(csound, Str("%.3f"), values[0]);

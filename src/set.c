@@ -67,19 +67,12 @@ int32_t websocket_set_init(CSOUND *csound, WS_set *p)
     const char *typeName = type->varTypeName;
     const uint8_t dataType = ('S' == typeName[0]) ? StringType : Float64ArrayType;
 
-    p->msgPreSize = pathLength + 2;
-    if (Float64ArrayType == dataType) {
-        p->msgPreSize += (4 - (p->msgPreSize % 4)) % 4; // Align to size of uint32 for array length.
-        p->msgPreArraySizeIndex = p->msgPreSize;
-        p->msgPreSize += 4;
-        p->msgPreSize += (8 - (p->msgPreSize % 8)) % 8; // Align to size of double for array length. TODO: Use size of MYFLT instead of double.
-    }
-
+    p->msgPreSize = pathLength + 2; // Path length + null terminator + data type.
     p->msgPre = csound->Calloc(csound, p->msgPreSize);
 
     char *d = p->msgPre;
     memcpy(d, p->path->data, strlen(p->path->data));
-    d += pathLength + 1;
+    d += pathLength + 1; // Advance past path's null terminator.
 
     *d = dataType;
 
@@ -96,7 +89,7 @@ int32_t websocket_setArray_perf(CSOUND *csound, WS_set *p) {
     WebsocketPathData *pathData = getWebsocketPathData(csound, ws->pathSetFloatsHashTable, path);
 
     const size_t inputSize = input->allocated;
-    const size_t msgSize = p->msgPreSize + inputSize;
+    const size_t msgSize = p->msgPreSize + 4 + inputSize;
 
     WebsocketMessage *msg = pathData->messages + pathData->messageIndex;
     if (msg->size < msgSize) {
@@ -104,9 +97,15 @@ int32_t websocket_setArray_perf(CSOUND *csound, WS_set *p) {
         msg->buffer = csound->Malloc(csound, 2 * msgSize);
         msg->size = msgSize;
     }
-    memcpy(msg->buffer, p->msgPre, p->msgPreSize);
-    *(uint32_t*)(msg->buffer + p->msgPreArraySizeIndex) = inputSize / sizeof(MYFLT);
-    memcpy(msg->buffer + p->msgPreSize, input->data, inputSize);
+
+    char *d = msg->buffer;
+    memcpy(d, p->msgPre, p->msgPreSize); // Path and data type.
+    d += p->msgPreSize;
+
+    *(uint32_t*)(d) = inputSize / sizeof(MYFLT); // Array length.
+    d += 4;
+
+    memcpy(d, input->data, inputSize); // Array values.
 
     writeWebsocketPathDataMessageIndex(csound, pathData);
 
@@ -131,8 +130,9 @@ int32_t websocket_setString_perf(CSOUND *csound, WS_set *p) {
         msg->buffer = csound->Malloc(csound, 2 * msgSize);
         msg->size = msgSize;
     }
-    memcpy(msg->buffer, p->msgPre, p->msgPreSize);
-    memcpy(msg->buffer + p->msgPreSize, input->data, inputSize);
+
+    memcpy(msg->buffer, p->msgPre, p->msgPreSize); // Path and data type.
+    memcpy(msg->buffer + p->msgPreSize, input->data, inputSize); // String.
 
     writeWebsocketPathDataMessageIndex(csound, pathData);
 
