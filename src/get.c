@@ -126,17 +126,12 @@ int32_t websocket_get_init(CSOUND *csound, WS_get *p)
     return OK;
 }
 
-int32_t websocket_getArray_perf(CSOUND *csound, WS_get *p) {
-    const Websocket *const ws = p->common.websocket;
-
-    CS_HASH_TABLE *hashTable = ws->pathGetFloatsHashTable;
-
-    WebsocketPathData *pathData = csound->GetHashTableValue(csound, hashTable, p->path->data);
+void static readWebsocketPathDataMessage(CSOUND *csound, CS_HASH_TABLE *pathHashTable, WS_get *p, int dataType)
+{
+    WebsocketPathData *pathData = csound->GetHashTableValue(csound, pathHashTable, p->path->data);
     if (!pathData) {
-        return OK;
+        return;
     }
-
-    ARRAYDAT *output = p->output;
 
     while (true) {
         int messageIndex = -1;
@@ -149,61 +144,44 @@ int32_t websocket_getArray_perf(CSOUND *csound, WS_get *p) {
             }
 
             WebsocketMessage *msg = pathData->messages + messageIndex;
-            MYFLT *d = (MYFLT*) msg->buffer;
+            void *outputData = NULL;
             size_t size = msg->size;
-            if (output->allocated < size) {
-                csound->Free(csound, output->data);
-                output->data = csound->Malloc(csound, 2 * size);
-                output->allocated = 2 * size;
+
+            if (Float64ArrayType == dataType) {
+                ARRAYDAT *output = p->output;
+                if (output->allocated < size) {
+                    csound->Free(csound, output->data);
+                    output->data = csound->Malloc(csound, 2 * size);
+                    output->allocated = 2 * size;
+                }
+                outputData = output->data;
             }
-            memcpy(output->data, d, size);
+            else if (StringType == dataType) {
+                STRINGDAT *output = p->output;
+                if (output->size < (int)size) {
+                    csound->Free(csound, output->data);
+                    output->data = csound->Malloc(csound, 2 * size);
+                    output->size = 2 * size;
+                }
+                outputData = output->data;
+            }
+
+            memcpy(outputData, msg->buffer, size);
+
+            break;
         }
         else {
             break;
         }
     }
+}
 
+int32_t websocket_getArray_perf(CSOUND *csound, WS_get *p) {
+    readWebsocketPathDataMessage(csound, p->common.websocket->pathGetFloatsHashTable, p, Float64ArrayType);
     return OK;
 }
 
 int32_t websocket_getString_perf(CSOUND *csound, WS_get *p) {
-    const Websocket *const ws = p->common.websocket;
-
-    CS_HASH_TABLE *hashTable = ws->pathGetStringHashTable;
-
-    WebsocketPathData *pathData = csound->GetHashTableValue(csound, hashTable, p->path->data);
-    if (!pathData) {
-        return OK;
-    }
-
-    STRINGDAT *output = p->output;
-
-    while (true) {
-        int messageIndex = -1;
-        const int read = csound->ReadCircularBuffer(csound, pathData->messageIndexCircularBuffer, &messageIndex, 1);
-        if (read == 1) {
-            // Make sure we're reading the most recent message sent to the websocket.
-            int unused = -1;
-            if (csound->PeekCircularBuffer(csound, pathData->messageIndexCircularBuffer, &unused, 1)) {
-                continue;
-            }
-
-            char *d = pathData->messages[messageIndex].buffer;
-
-            // csound->Message(csound, Str("data = %s\n"), d);
-            size_t size = strlen(d) + 1;
-            if (output->size < (int)size) {
-                csound->Free(csound, output->data);
-                output->data = csound->Malloc(csound, 2 * size);
-                output->size = 2 * size;
-            }
-            memset(output->data, 0, output->size);
-            memcpy(output->data, d, size);
-        }
-        else {
-            break;
-        }
-    }
-
+    readWebsocketPathDataMessage(csound, p->common.websocket->pathGetStringHashTable, p, StringType);
     return OK;
 }
