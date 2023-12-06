@@ -191,14 +191,14 @@ int32_t websocket_getString_perf(CSOUND *csound, WS_get *p) {
             char *d = pathData->messages[messageIndex].buffer;
 
             // csound->Message(csound, Str("data = %s\n"), d);
-            size_t length = strlen(d);
-            if (output->size < (int)length) {
+            size_t size = strlen(d) + 1;
+            if (output->size < (int)size) {
                 csound->Free(csound, output->data);
-                output->data = csound->Malloc(csound, 2 * length + 1);
-                output->size = 2 * length + 1;
+                output->data = csound->Malloc(csound, 2 * size);
+                output->size = 2 * size;
             }
             memset(output->data, 0, output->size);
-            memcpy(output->data, d, length);
+            memcpy(output->data, d, size);
         }
         else {
             break;
