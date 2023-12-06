@@ -10,7 +10,7 @@ int32_t onWebsocketReceive(struct lws *websocket, void *inputData, size_t inputD
         char *data = NULL;
 
         int isFinalFragment = lws_is_final_fragment(websocket);
-        if (isFinalFragment && ws->receiveBufferIndex == 0) {
+        if (isFinalFragment && 0 == ws->receiveBufferIndex) {
             data = inputData;
         }
         else {
@@ -47,42 +47,30 @@ int32_t onWebsocketReceive(struct lws *websocket, void *inputData, size_t inputD
             csound->Message(csound, Str("%s"), "WARNING: websocket path is empty\n");
             return OK;
         }
-
-        // csound->Message(csound, Str("path = %s, "), path);
         d += pathLength + 1;
 
-        // Get the data type. It should be either 1 or 2 for string or doubles array.
+        // Get the data type. It should be either 1 or 2 for string or floats/doubles array.
         const int8_t type = *d;
-        // csound->Message(csound, Str("type = %d, "), type);
         d++;
 
         size_t bufferSize = 0;
         WebsocketPathData *pathData = NULL;
 
-        // Write the data to the path's messages circular buffer.
-        if (Float64ArrayType == type) {
+        // Write the data to the path's message buffer.
+        switch (type) {
+        case Float64ArrayType: {
             const uint32_t *length = (uint32_t*)d;
             d += 4;
-            // csound->Message(csound, Str("length = %d, "), *length);
-
-            // const double *values = (double*)d;
-            // csound->Message(csound, Str("data = %s"), "[ ");
-            // csound->Message(csound, Str("%.3f"), values[0]);
-            // for (int i = 1; i < *length; i++) {
-            //     csound->Message(csound, Str(", %.3f"), values[i]);
-            // }
-            // csound->Message(csound, Str("%s"), " ]\n");
-
             pathData = getWebsocketPathData(csound, ws->pathGetFloatsHashTable, path);
             bufferSize = *length * sizeof(double);
+            break;
         }
-        else if (StringType == type) {
-            // csound->Message(csound, Str("data = %s\n"), d);
-
+        case StringType: {
             pathData = getWebsocketPathData(csound, ws->pathGetStringHashTable, path);
             bufferSize = strlen(d) + 1;
+            break;
         }
-        else {
+        default:
             csound->Message(csound, Str("WARNING: Unknown websocket data type %d received\n"), type);
             return OK;
         }
@@ -94,7 +82,7 @@ int32_t onWebsocketReceive(struct lws *websocket, void *inputData, size_t inputD
             msg->size = 0;
         }
         if (msg->size == 0) {
-            msg->buffer = csound->Calloc(csound, bufferSize);
+            msg->buffer = csound->Malloc(csound, bufferSize);
             msg->size = bufferSize;
         }
         memcpy(msg->buffer, d, bufferSize);
@@ -137,7 +125,7 @@ void static readWebsocketPathDataMessage(CSOUND *csound, CS_HASH_TABLE *pathHash
         int messageIndex = -1;
         const int read = csound->ReadCircularBuffer(csound, pathData->messageIndexCircularBuffer, &messageIndex, 1);
         if (read == 1) {
-            // Make sure we're reading the most recent message sent to the websocket.
+            // Advanced to the most recent message sent to the websocket.
             int unused = -1;
             if (csound->PeekCircularBuffer(csound, pathData->messageIndexCircularBuffer, &unused, 1)) {
                 continue;
@@ -176,12 +164,14 @@ void static readWebsocketPathDataMessage(CSOUND *csound, CS_HASH_TABLE *pathHash
     }
 }
 
-int32_t websocket_getArray_perf(CSOUND *csound, WS_get *p) {
+int32_t websocket_getArray_perf(CSOUND *csound, WS_get *p)
+{
     readWebsocketPathDataMessage(csound, p->common.websocket->pathGetFloatsHashTable, p, Float64ArrayType);
     return OK;
 }
 
-int32_t websocket_getString_perf(CSOUND *csound, WS_get *p) {
+int32_t websocket_getString_perf(CSOUND *csound, WS_get *p)
+{
     readWebsocketPathDataMessage(csound, p->common.websocket->pathGetStringHashTable, p, StringType);
     return OK;
 }

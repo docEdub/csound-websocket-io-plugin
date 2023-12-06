@@ -6,7 +6,7 @@
 typedef struct WS_get
 {
     OPDS h;
-    void *output; // STRINGDAT* or ARRAYDAT*
+    void *output; // ARRAYDAT* or STRINGDAT*
     MYFLT *port;
     STRINGDAT *path;
     WS_common common;

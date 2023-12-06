@@ -54,7 +54,6 @@ static void destroyWebsocketPathHashTable(CSOUND *csound, CS_HASH_TABLE *pathHas
         }
 
         csound->DestroyCircularBuffer(csound, pathData->messageIndexCircularBuffer);
-
         csound->Free(csound, pathData);
 
         pathItem = pathItem->next;
@@ -91,7 +90,7 @@ static uintptr_t processThread(void *vws)
 
     while (ws->isRunning) {
         lws_service(ws->context, 0);
-        lws_callback_on_writable_all_protocol(ws->context, &ws->protocols[0]);
+        lws_callback_on_writable_all_protocol(ws->context, ws->protocols);
     }
 
     return 0;
@@ -143,9 +142,7 @@ Websocket *getWebsocket(CSOUND *csound, int port, WS_common *p)
 
     csound->SetHashTableValue(csound, shared->portWebsocketHashTable, (char*)&p->portKey, ws);
 
-    // Allocate 2 protocols; the actual protocol, and a null protocol at the end
-    // (idk why, but this is how the original websocket opcode does it and the call to lws_service sometimes crashes
-    // without it).
+    // Allocate 2 protocols; the actual protocol, and a null protocol at the end that serves as a null terminator.
     ws->protocols = csound->Calloc(csound, sizeof(struct lws_protocols) * 2);
 
     ws->protocols[0].callback = callback;
@@ -217,7 +214,7 @@ void writeWebsocketPathDataMessageIndex(CSOUND *csound, WebsocketPathData *pathD
             break;
         }
 
-        // Message buffer is full. Read 1 item from it to free up room for the new message index.
+        // Message index buffer full. Read 1 item to free up room for the new message index.
         int unused;
         csound->ReadCircularBuffer(csound, pathData->messageIndexCircularBuffer, &unused, 1);
     }

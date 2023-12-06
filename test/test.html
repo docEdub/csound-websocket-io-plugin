@@ -1,14 +1,14 @@
 <!doctype html>
-<html>
-<head>
-    <title>Websocket test</title>
-</head>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Websocket test</title>
+    </head>
 <body>
 <script>
 
-// var websocketIn = new WebSocket("ws://127.0.0.1:54321", "csound");
-var websocketOut = new WebSocket("ws://127.0.0.1:12345", "csound");
-var websocketIn = websocketOut;
+var websocket = new WebSocket("ws://127.0.0.1:12345", "csound");
 
 const StringType = 1;
 const Float64ArrayType = 2;
@@ -22,7 +22,7 @@ const textDecoder = new TextDecoder;
 
 let i = 1;
 setInterval(() => {
-    if (websocketOut.readyState == WebSocket.OPEN) {
+    if (websocket.readyState == WebSocket.OPEN) {
         console.debug(`sending to protocol "csound" on paths "/test/1" and "/test/2" ...`);
 
         for (let j = 0; j < 10; j++) {
@@ -46,9 +46,7 @@ setInterval(() => {
             sendBuffer_asUint8s[written++] = 0;
 
             // Send.
-            // console.debug(sendBuffer_asUint8s);
-            // console.debug(textDecoder.decode(sendBuffer));
-            websocketOut.send(sendBuffer);
+            websocket.send(sendBuffer);
             sendBuffer_asUint8s.fill(0);
 
 
@@ -75,9 +73,7 @@ setInterval(() => {
             }
 
             // Send.
-            // console.debug(sendBuffer_asUint8s);
-            // console.debug(textDecoder.decode(sendBuffer));
-            websocketOut.send(sendBuffer);
+            websocket.send(sendBuffer);
             sendBuffer_asUint8s.fill(0);
 
             i++;
@@ -88,20 +84,19 @@ setInterval(() => {
     }
 }, 1000);
 
-websocketIn.onopen = (event) => {
+websocket.onopen = (event) => {
     console.debug(`websocket "test" connected`);
 };
 
-websocketIn.onclose = (event) => {
+websocket.onclose = (event) => {
     console.debug(`websocket "test" disconnected`);
 };
 
-websocketIn.onerror = (event) => {
+websocket.onerror = (event) => {
     console.debug(`websocket "test" error`);
 };
 
-websocketIn.onmessage = async (event) => {
-
+websocket.onmessage = async (event) => {
     const data = await event.data.arrayBuffer();
     const dataView = new DataView(data);
 
@@ -154,11 +149,7 @@ websocketIn.onmessage = async (event) => {
         i++;
 
         // Read string data.
-        let stringData = "";
-        while (dataView.getUint8(i) !== 0) {
-            stringData += String.fromCharCode(dataView.getUint8(i));
-            i++;
-        }
+        const stringData = textDecoder.decode(new Uint8Array(data, i, data.byteLength - i));
         console.log(`   i = ${i}, string data = "${stringData}"`);
     }
     else {
