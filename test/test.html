@@ -137,23 +137,41 @@ websocketIn.onmessage = async (event) => {
     const dataType = dataView.getUint8(i);
     console.log(`   i = ${i}, data type = ${dataType}`);
 
-    // Set i to index of array length.
-    i++;
-    i += (4 - (i % 4)) % 4;
+    if (Float64ArrayType === dataType) {
+        // Set i to index of array length.
+        i++;
+        i += (4 - (i % 4)) % 4;
 
-    // Read array length.
-    const arrayLength = dataView.getUint32(i, true);
-    console.log(`   i = ${i}, array length = ${arrayLength}`);
+        // Read array length.
+        const arrayLength = dataView.getUint32(i, true);
+        console.log(`   i = ${i}, array length = ${arrayLength}`);
 
-    // Set i to index of array data.
-    i += 4;
-    i += (8 - (i % 8)) % 8;
+        // Set i to index of array data.
+        i += 4;
+        i += (8 - (i % 8)) % 8;
 
-    // Read array data.
-    for (let j = 0; j < arrayLength; j++) {
-        const value = dataView.getFloat64(i, true);
-        console.log(`   i = ${i}, value = ${value}`);
-        i += 8;
+        // Read array data.
+        for (let j = 0; j < arrayLength; j++) {
+            const value = dataView.getFloat64(i, true);
+            console.log(`   i = ${i}, value = ${value}`);
+            i += 8;
+        }
+    }
+    else if (StringType === dataType) {
+        // Set i to index of string data.
+        i++;
+
+        // Read string data.
+        let stringData = "";
+        while (dataView.getUint8(i) !== 0) {
+            stringData += String.fromCharCode(dataView.getUint8(i));
+            i++;
+        }
+        console.log(`   i = ${i}, string data = "${stringData}"`);
+    }
+    else {
+        console.error(`websocket received invalid message: invalid data type`);
+        return;
     }
 };
 
