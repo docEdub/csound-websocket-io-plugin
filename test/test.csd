@@ -46,8 +46,10 @@ instr 2
     SValue1 init "1, 2, 3"
     kValue2[] = fillarray(1, 2, 3)
 
-    websocket_set(54321, "/test/1", SValue1)
-    websocket_set(54321, "/test/2", kValue2)
+    ; websocket_set(54321, "/test/1", SValue1)
+    ; websocket_set(54321, "/test/2", kValue2)
+    websocket_set(12345, "/test/1", SValue1)
+    websocket_set(12345, "/test/2", kValue2)
 endin
 
 </CsInstruments>
