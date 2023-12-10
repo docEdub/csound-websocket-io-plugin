@@ -166,12 +166,40 @@ Websocket *getWebsocket(CSOUND *csound, int port, WS_common *p)
     return ws;
 }
 
-void releaseWebsocket(CSOUND *csound, Websocket *ws)
+static void waitForPathDataToBeSent(CSOUND *csound, CS_HASH_TABLE *pathHashTable)
 {
+    CONS_CELL *pathItem = csound->GetHashTableValues(csound, pathHashTable);
+    while (pathItem) {
+        WebsocketPathData *pathData = pathItem->value;
+        while (true) {
+            int messageIndex;
+            int read = csound->ReadCircularBuffer(csound, pathData->messageIndexCircularBuffer, &messageIndex, 1);
+            if (read == 0) {
+                break;
+            }
+            csound->Sleep(0);
+        }
+        pathItem = pathItem->next;
+    }
+}
+
+void releaseWebsocket(CSOUND *csound, WS_common *p)
+{
+    Websocket *ws = p->websocket;
+
     ws->refCount--;
     if (0 < ws->refCount) {
         return;
     }
+
+    while (!ws->isRunning) {
+        csound->Sleep(0);
+    }
+
+    waitForPathDataToBeSent(csound, ws->pathGetFloatsHashTable);
+    waitForPathDataToBeSent(csound, ws->pathGetStringHashTable);
+    waitForPathDataToBeSent(csound, ws->pathSetFloatsHashTable);
+    waitForPathDataToBeSent(csound, ws->pathSetStringHashTable);
 
     ws->isRunning = false;
     lws_cancel_service(ws->context);
@@ -188,6 +216,9 @@ void releaseWebsocket(CSOUND *csound, Websocket *ws)
     csound->Free(csound, ws->receiveBuffer);
     csound->Free(csound, ws->protocols);
     csound->Free(csound, ws);
+
+    SharedWebsocketData *shared = getSharedData(csound);
+    csound->RemoveHashTableKey(csound, shared->portWebsocketHashTable, (char*)&p->portKey);
 }
 
 WebsocketPathData *getWebsocketPathData(CSOUND *csound, CS_HASH_TABLE *pathHashTable, char *path)

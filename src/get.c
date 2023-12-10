@@ -96,7 +96,7 @@ int32_t onWebsocketReceive(struct lws *websocket, void *inputData, size_t inputD
 int32_t websocket_get_destroy(CSOUND *csound, void *vp)
 {
     WS_get *p = vp;
-    releaseWebsocket(csound, p->common.websocket);
+    releaseWebsocket(csound, &p->common);
     return OK;
 }
 

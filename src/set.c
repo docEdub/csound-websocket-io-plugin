@@ -46,36 +46,7 @@ int32_t onWebsocketWritable(struct lws *websocket)
 int32_t websocket_set_destroy(CSOUND *csound, void *vp)
 {
     WS_set *p = vp;
-    releaseWebsocket(csound, p->common.websocket);
-    return OK;
-}
-
-int32_t websocket_set_init(CSOUND *csound, WS_set *p)
-{
-    initPlugin();
-
-    p->common.csound = csound;
-
-    initPortKey(&p->common.portKey, *p->port);
-    p->common.websocket = getWebsocket(csound, *p->port, &p->common);
-
-    csound->RegisterDeinitCallback(csound, p, websocket_set_destroy);
-
-    size_t pathLength = strlen(p->path->data);
-
-    const CS_TYPE *type = csound->GetTypeForArg(p->input);
-    const char *typeName = type->varTypeName;
-    const uint8_t dataType = ('S' == typeName[0]) ? StringType : Float64ArrayType;
-
-    p->msgPreSize = pathLength + 2; // Path length + null terminator + data type.
-    p->msgPre = csound->Calloc(csound, p->msgPreSize);
-
-    char *d = p->msgPre;
-    memcpy(d, p->path->data, strlen(p->path->data));
-    d += pathLength + 1; // Advance past path's null terminator.
-
-    *d = dataType;
-
+    releaseWebsocket(csound, &p->common);
     return OK;
 }
 
@@ -104,6 +75,44 @@ static void writeWebsocketPathDataMessage(CSOUND *csound, CS_HASH_TABLE *pathHas
     memcpy(d, data, dataSize); // Array or String data.
 
     writeWebsocketPathDataMessageIndex(csound, pathData);
+}
+
+int32_t websocket_set_init(CSOUND *csound, WS_set *p)
+{
+    initPlugin();
+
+    p->common.csound = csound;
+
+    initPortKey(&p->common.portKey, *p->port);
+    p->common.websocket = getWebsocket(csound, *p->port, &p->common);
+
+    csound->RegisterDeinitCallback(csound, p, websocket_set_destroy);
+
+    size_t pathLength = strlen(p->path->data);
+
+    const CS_TYPE *type = csound->GetTypeForArg(p->input);
+    const char *typeName = type->varTypeName;
+    const uint8_t dataType = ('S' == typeName[0]) ? StringType : Float64ArrayType;
+
+    p->msgPreSize = pathLength + 2; // Path length + null terminator + data type.
+    p->msgPre = csound->Calloc(csound, p->msgPreSize);
+
+    char *d = p->msgPre;
+    memcpy(d, p->path->data, strlen(p->path->data));
+    d += pathLength + 1; // Advance past path's null terminator.
+
+    *d = dataType;
+
+    switch (dataType) {
+        case Float64ArrayType:
+            return websocket_setArray_perf(csound, p);
+        case StringType:
+            return websocket_setString_perf(csound, p);
+        default:
+            break;
+    }
+
+    return OK;
 }
 
 int32_t websocket_setArray_perf(CSOUND *csound, WS_set *p) {

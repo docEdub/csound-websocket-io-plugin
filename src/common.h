@@ -66,7 +66,7 @@ void initPlugin();
 void initPortKey(PortKey *portKey, MYFLT port);
 
 Websocket *getWebsocket(CSOUND *csound, int port, WS_common *p);
-void releaseWebsocket(CSOUND *csound, Websocket *ws);
+void releaseWebsocket(CSOUND *csound, WS_common *p);
 
 WebsocketPathData *getWebsocketPathData(CSOUND *csound, CS_HASH_TABLE *pathHashTable, char *path);
 void writeWebsocketPathDataMessageIndex(CSOUND *csound, WebsocketPathData *pathData);
