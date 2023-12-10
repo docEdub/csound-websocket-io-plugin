@@ -43,40 +43,6 @@ int32_t onWebsocketWritable(struct lws *websocket)
     return OK;
 }
 
-int32_t websocket_set_destroy(CSOUND *csound, void *vp)
-{
-    WS_set *p = vp;
-    releaseWebsocket(csound, &p->common);
-    return OK;
-}
-
-static void writeWebsocketPathDataMessage(CSOUND *csound, CS_HASH_TABLE *pathHashTable, WS_set *p, int dataType, const void *data, size_t dataSize)
-{
-    WebsocketPathData *pathData = getWebsocketPathData(csound, pathHashTable, p->path->data);
-
-    const size_t msgSize = p->msgPreSize + dataSize + ((Float64ArrayType == dataType) ? 4 : 0);
-
-    WebsocketMessage *msg = pathData->messages + pathData->messageIndex;
-    if (msg->size < msgSize) {
-        csound->Free(csound, msg->buffer);
-        msg->buffer = csound->Malloc(csound, 2 * msgSize);
-        msg->size = msgSize;
-    }
-
-    char *d = msg->buffer;
-    memcpy(d, p->msgPre, p->msgPreSize); // Path and data type.
-    d += p->msgPreSize;
-
-    if (Float64ArrayType == dataType) {
-        *(uint32_t*)(d) = dataSize / sizeof(MYFLT); // Array length.
-        d += 4;
-    }
-
-    memcpy(d, data, dataSize); // Array or String data.
-
-    writeWebsocketPathDataMessageIndex(csound, pathData);
-}
-
 int32_t websocket_set_init(CSOUND *csound, WS_set *p)
 {
     initPlugin();
@@ -85,8 +51,6 @@ int32_t websocket_set_init(CSOUND *csound, WS_set *p)
 
     initPortKey(&p->common.portKey, *p->port);
     p->common.websocket = getWebsocket(csound, *p->port, &p->common);
-
-    csound->RegisterDeinitCallback(csound, p, websocket_set_destroy);
 
     size_t pathLength = strlen(p->path->data);
 
@@ -113,6 +77,34 @@ int32_t websocket_set_init(CSOUND *csound, WS_set *p)
     }
 
     return OK;
+}
+
+static void writeWebsocketPathDataMessage(CSOUND *csound, CS_HASH_TABLE *pathHashTable, WS_set *p, int dataType, const void *data, size_t dataSize)
+{
+    WebsocketPathData *pathData = getWebsocketPathData(csound, pathHashTable, p->path->data);
+
+    const size_t msgSize = p->msgPreSize + dataSize + ((Float64ArrayType == dataType) ? 4 : 0);
+
+    // NB: malloc is used instead of csound->Malloc because csound->Free crashes after the buffer is given to lws_write.
+    WebsocketMessage *msg = pathData->messages + pathData->messageIndex;
+    if (msg->size < msgSize) {
+        free(msg->buffer);
+        msg->buffer = malloc(2 * msgSize);
+        msg->size = msgSize;
+    }
+
+    char *d = msg->buffer;
+    memcpy(d, p->msgPre, p->msgPreSize); // Path and data type.
+    d += p->msgPreSize;
+
+    if (Float64ArrayType == dataType) {
+        *(uint32_t*)(d) = dataSize / sizeof(MYFLT); // Array length.
+        d += 4;
+    }
+
+    memcpy(d, data, dataSize); // Array or String data.
+
+    writeWebsocketPathDataMessageIndex(csound, pathData);
 }
 
 int32_t websocket_setArray_perf(CSOUND *csound, WS_set *p) {

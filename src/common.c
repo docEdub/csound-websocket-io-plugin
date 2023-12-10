@@ -11,9 +11,64 @@ static bool isPluginInitialized = false;
 extern int32_t onWebsocketReceive(struct lws *websocket, void *inputData, size_t inputDataSize);
 extern int32_t onWebsocketWritable(struct lws *websocket);
 
+static void destroyWebsocketPathHashTable(CSOUND *csound, CS_HASH_TABLE *pathHashTable)
+{
+    CONS_CELL *pathItem = csound->GetHashTableValues(csound, pathHashTable);
+    while (pathItem) {
+        WebsocketPathData *pathData = pathItem->value;
+
+        for (int i = 0; i < WebsocketBufferCount; i++) {
+            WebsocketMessage *msg = pathData->messages + i;
+            // NB: free is used instead of csound->Free because csound->Free crashes after the buffer is given to lws_write.
+            free(msg->buffer);
+            msg->size = 0;
+        }
+
+        csound->Free(csound, pathData->messages);
+        csound->DestroyCircularBuffer(csound, pathData->messageIndexCircularBuffer);
+        csound->Free(csound, pathData);
+
+        pathItem = pathItem->next;
+    }
+
+    csound->DestroyHashTable(csound, pathHashTable);
+}
+
+static void releaseWebsocket(CSOUND *csound, Websocket *ws)
+{
+    while (!ws->isRunning) {
+        csound->Sleep(0);
+    }
+
+    ws->isRunning = false;
+    lws_cancel_service(ws->context);
+
+    csound->JoinThread(ws->processThread);
+
+    lws_context_destroy(ws->context);
+
+    destroyWebsocketPathHashTable(csound, ws->pathSetStringHashTable);
+    destroyWebsocketPathHashTable(csound, ws->pathSetFloatsHashTable);
+    destroyWebsocketPathHashTable(csound, ws->pathGetStringHashTable);
+    destroyWebsocketPathHashTable(csound, ws->pathGetFloatsHashTable);
+
+    csound->Free(csound, ws->receiveBuffer);
+    csound->Free(csound, ws->protocols);
+    csound->Free(csound, ws);
+}
+
 static int32_t resetSharedData(CSOUND *csound, void *vshared)
 {
     SharedWebsocketData *shared = vshared;
+
+    // Destroy all websockets.
+    CONS_CELL *websocketItem = csound->GetHashTableValues(csound, shared->portWebsocketHashTable);
+    while (websocketItem) {
+        Websocket *ws = websocketItem->value;
+        releaseWebsocket(csound, ws);
+        websocketItem = websocketItem->next;
+    }
+
     csound->DestroyHashTable(csound, shared->portWebsocketHashTable);
     csound->DestroyGlobalVariable(csound, SharedWebsocketDataGlobalVariableName);
     return OK;
@@ -37,29 +92,10 @@ static SharedWebsocketData *getSharedData(CSOUND *csound)
 
 static WebsocketPathData *createWebsocketPathData(CSOUND *csound)
 {
-    WebsocketPathData *pathData = csound->Calloc(csound, sizeof(WebsocketPathData) + WebsocketBufferCount * sizeof(WebsocketMessage));
+    WebsocketPathData *pathData = csound->Calloc(csound, sizeof(WebsocketPathData));
     pathData->messageIndexCircularBuffer = csound->CreateCircularBuffer(csound, WebsocketBufferCount, sizeof(pathData->messageIndex));
+    pathData->messages = csound->Calloc(csound, sizeof(WebsocketMessage) * WebsocketBufferCount);
     return pathData;
-}
-
-static void destroyWebsocketPathHashTable(CSOUND *csound, CS_HASH_TABLE *pathHashTable)
-{
-    CONS_CELL *pathItem = csound->GetHashTableValues(csound, pathHashTable);
-    while (pathItem) {
-        WebsocketPathData *pathData = pathItem->value;
-
-        for (int i = 0; i < WebsocketBufferCount; i++) {
-            csound->Free(csound, pathData->messages[i].buffer);
-            pathData->messages[i].size = 0;
-        }
-
-        csound->DestroyCircularBuffer(csound, pathData->messageIndexCircularBuffer);
-        csound->Free(csound, pathData);
-
-        pathItem = pathItem->next;
-    }
-
-    csound->DestroyHashTable(csound, pathHashTable);
 }
 
 static int32_t callback(
@@ -142,7 +178,7 @@ Websocket *getWebsocket(CSOUND *csound, int port, WS_common *p)
 
     csound->SetHashTableValue(csound, shared->portWebsocketHashTable, (char*)&p->portKey, ws);
 
-    // Allocate 2 protocols; the actual protocol, and a null protocol at the end that serves as a null terminator.
+    // Allocate 2 protocols; the actual protocol, and a null protocol at the end. It's a libwebsocket thing.
     ws->protocols = csound->Calloc(csound, sizeof(struct lws_protocols) * 2);
 
     ws->protocols[0].callback = callback;
@@ -164,61 +200,6 @@ Websocket *getWebsocket(CSOUND *csound, int port, WS_common *p)
     ws->processThread = csound->CreateThread(processThread, ws);
 
     return ws;
-}
-
-static void waitForPathDataToBeSent(CSOUND *csound, CS_HASH_TABLE *pathHashTable)
-{
-    CONS_CELL *pathItem = csound->GetHashTableValues(csound, pathHashTable);
-    while (pathItem) {
-        WebsocketPathData *pathData = pathItem->value;
-        while (true) {
-            int messageIndex;
-            int read = csound->ReadCircularBuffer(csound, pathData->messageIndexCircularBuffer, &messageIndex, 1);
-            if (read == 0) {
-                break;
-            }
-            csound->Sleep(0);
-        }
-        pathItem = pathItem->next;
-    }
-}
-
-void releaseWebsocket(CSOUND *csound, WS_common *p)
-{
-    Websocket *ws = p->websocket;
-
-    ws->refCount--;
-    if (0 < ws->refCount) {
-        return;
-    }
-
-    while (!ws->isRunning) {
-        csound->Sleep(0);
-    }
-
-    waitForPathDataToBeSent(csound, ws->pathGetFloatsHashTable);
-    waitForPathDataToBeSent(csound, ws->pathGetStringHashTable);
-    waitForPathDataToBeSent(csound, ws->pathSetFloatsHashTable);
-    waitForPathDataToBeSent(csound, ws->pathSetStringHashTable);
-
-    ws->isRunning = false;
-    lws_cancel_service(ws->context);
-
-    csound->JoinThread(ws->processThread);
-
-    lws_context_destroy(ws->context);
-
-    destroyWebsocketPathHashTable(csound, ws->pathSetStringHashTable);
-    destroyWebsocketPathHashTable(csound, ws->pathSetFloatsHashTable);
-    destroyWebsocketPathHashTable(csound, ws->pathGetStringHashTable);
-    destroyWebsocketPathHashTable(csound, ws->pathGetFloatsHashTable);
-
-    csound->Free(csound, ws->receiveBuffer);
-    csound->Free(csound, ws->protocols);
-    csound->Free(csound, ws);
-
-    SharedWebsocketData *shared = getSharedData(csound);
-    csound->RemoveHashTableKey(csound, shared->portWebsocketHashTable, (char*)&p->portKey);
 }
 
 WebsocketPathData *getWebsocketPathData(CSOUND *csound, CS_HASH_TABLE *pathHashTable, char *path)
@@ -252,4 +233,11 @@ void writeWebsocketPathDataMessageIndex(CSOUND *csound, WebsocketPathData *pathD
 
     pathData->messageIndex++;
     pathData->messageIndex %= WebsocketBufferCount;
+}
+
+int32_t noop_perf(CSOUND *csound, void *p)
+{
+    IGN(csound);
+    IGN(p);
+    return OK;
 }

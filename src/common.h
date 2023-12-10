@@ -25,14 +25,14 @@ typedef struct PortKey
 } PortKey;
 
 typedef struct WebsocketMessage {
-    char *buffer;
     size_t size;
+    char *buffer;
 } WebsocketMessage;
 
 typedef struct WebsocketPathData {
     int messageIndex;
     void *messageIndexCircularBuffer;
-    WebsocketMessage messages[];
+    WebsocketMessage *messages;
 } WebsocketPathData;
 
 typedef struct Websocket {
@@ -66,9 +66,10 @@ void initPlugin();
 void initPortKey(PortKey *portKey, MYFLT port);
 
 Websocket *getWebsocket(CSOUND *csound, int port, WS_common *p);
-void releaseWebsocket(CSOUND *csound, WS_common *p);
 
 WebsocketPathData *getWebsocketPathData(CSOUND *csound, CS_HASH_TABLE *pathHashTable, char *path);
 void writeWebsocketPathDataMessageIndex(CSOUND *csound, WebsocketPathData *pathData);
+
+int32_t noop_perf(CSOUND *csound, void *p);
 
 #endif

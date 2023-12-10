@@ -3,27 +3,27 @@
 
 static OENTRY localops[] = {
     {
-        .opname = "websocket_getArray",
+        .opname = "websocket_getArray_i",
         .dsblksiz = sizeof(WS_get),
         .thread = 3,
         .outypes = "i[]",
         .intypes = "cS",
         .iopadr = (SUBR) websocket_get_init,
-        .kopadr = NULL,
+        .kopadr = noop_perf,
         .aopadr = NULL
     },
     {
-        .opname = "websocket_getArray",
+        .opname = "websocket_getArray_i",
         .dsblksiz = sizeof(WS_get),
         .thread = 3,
         .outypes = "i[]",
         .intypes = "iS",
         .iopadr = (SUBR) websocket_get_init,
-        .kopadr = NULL,
+        .kopadr = noop_perf,
         .aopadr = NULL
     },
     {
-        .opname = "websocket_getArray",
+        .opname = "websocket_getArray_k",
         .dsblksiz = sizeof(WS_get),
         .thread = 3,
         .outypes = "k[]",
@@ -33,7 +33,7 @@ static OENTRY localops[] = {
         .aopadr = NULL
     },
     {
-        .opname = "websocket_getArray",
+        .opname = "websocket_getArray_k",
         .dsblksiz = sizeof(WS_get),
         .thread = 3,
         .outypes = "k[]",
@@ -43,7 +43,27 @@ static OENTRY localops[] = {
         .aopadr = NULL
     },
     {
-        .opname = "websocket_getString",
+        .opname = "websocket_getString_i",
+        .dsblksiz = sizeof(WS_get),
+        .thread = 3,
+        .outypes = "S",
+        .intypes = "cS",
+        .iopadr = (SUBR) websocket_get_init,
+        .kopadr = noop_perf,
+        .aopadr = NULL
+    },
+    {
+        .opname = "websocket_getString_i",
+        .dsblksiz = sizeof(WS_get),
+        .thread = 3,
+        .outypes = "S",
+        .intypes = "iS",
+        .iopadr = (SUBR) websocket_get_init,
+        .kopadr = noop_perf,
+        .aopadr = NULL
+    },
+    {
+        .opname = "websocket_getString_k",
         .dsblksiz = sizeof(WS_get),
         .thread = 3,
         .outypes = "S",
@@ -53,7 +73,7 @@ static OENTRY localops[] = {
         .aopadr = NULL
     },
     {
-        .opname = "websocket_getString",
+        .opname = "websocket_getString_k",
         .dsblksiz = sizeof(WS_get),
         .thread = 3,
         .outypes = "S",
@@ -63,27 +83,47 @@ static OENTRY localops[] = {
         .aopadr = NULL
     },
     {
-        .opname = "websocket_set",
+        .opname = "websocket_set_i",
         .dsblksiz = sizeof(WS_set),
         .thread = 3,
         .outypes = "",
         .intypes = "cSi[]",
         .iopadr = (SUBR) websocket_set_init,
-        .kopadr = (SUBR) websocket_setArray_perf,
+        .kopadr = noop_perf,
         .aopadr = NULL
     },
     {
-        .opname = "websocket_set",
+        .opname = "websocket_set_i",
         .dsblksiz = sizeof(WS_set),
         .thread = 3,
         .outypes = "",
         .intypes = "iSi[]",
         .iopadr = (SUBR) websocket_set_init,
-        .kopadr = NULL,
+        .kopadr = noop_perf,
         .aopadr = NULL
     },
     {
-        .opname = "websocket_set",
+        .opname = "websocket_set_i",
+        .dsblksiz = sizeof(WS_set),
+        .thread = 3,
+        .outypes = "",
+        .intypes = "cSS",
+        .iopadr = (SUBR) websocket_set_init,
+        .kopadr = noop_perf,
+        .aopadr = NULL
+    },
+    {
+        .opname = "websocket_set_i",
+        .dsblksiz = sizeof(WS_set),
+        .thread = 3,
+        .outypes = "",
+        .intypes = "iSS",
+        .iopadr = (SUBR) websocket_set_init,
+        .kopadr = noop_perf,
+        .aopadr = NULL
+    },
+    {
+        .opname = "websocket_set_k",
         .dsblksiz = sizeof(WS_set),
         .thread = 3,
         .outypes = "",
@@ -93,7 +133,7 @@ static OENTRY localops[] = {
         .aopadr = NULL
     },
     {
-        .opname = "websocket_set",
+        .opname = "websocket_set_k",
         .dsblksiz = sizeof(WS_set),
         .thread = 3,
         .outypes = "",
@@ -103,7 +143,7 @@ static OENTRY localops[] = {
         .aopadr = NULL
     },
     {
-        .opname = "websocket_set",
+        .opname = "websocket_set_k",
         .dsblksiz = sizeof(WS_set),
         .thread = 3,
         .outypes = "",
@@ -113,7 +153,7 @@ static OENTRY localops[] = {
         .aopadr = NULL
     },
     {
-        .opname = "websocket_set",
+        .opname = "websocket_set_k",
         .dsblksiz = sizeof(WS_set),
         .thread = 3,
         .outypes = "",

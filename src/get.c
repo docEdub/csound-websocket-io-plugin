@@ -77,12 +77,13 @@ int32_t onWebsocketReceive(struct lws *websocket, void *inputData, size_t inputD
 
         WebsocketMessage *msg = pathData->messages + pathData->messageIndex;
 
+        // NB: malloc is used instead of csound->Malloc for consistency with the set opcodes because csound->Free crashes after the buffer is given to lws_write.
         if (0 < msg->size && msg->size < bufferSize) {
-            csound->Free(csound, msg->buffer);
+            free(msg->buffer);
             msg->size = 0;
         }
         if (msg->size == 0) {
-            msg->buffer = csound->Malloc(csound, bufferSize);
+            msg->buffer = malloc(bufferSize);
             msg->size = bufferSize;
         }
         memcpy(msg->buffer, d, bufferSize);
@@ -90,13 +91,6 @@ int32_t onWebsocketReceive(struct lws *websocket, void *inputData, size_t inputD
         writeWebsocketPathDataMessageIndex(csound, pathData);
     }
 
-    return OK;
-}
-
-int32_t websocket_get_destroy(CSOUND *csound, void *vp)
-{
-    WS_get *p = vp;
-    releaseWebsocket(csound, &p->common);
     return OK;
 }
 
@@ -109,7 +103,18 @@ int32_t websocket_get_init(CSOUND *csound, WS_get *p)
     initPortKey(&p->common.portKey, *p->port);
     p->common.websocket = getWebsocket(csound, *p->port, &p->common);
 
-    csound->RegisterDeinitCallback(csound, p, websocket_get_destroy);
+    const CS_TYPE *type = csound->GetTypeForArg(p->output);
+    const char *typeName = type->varTypeName;
+    const uint8_t dataType = ('S' == typeName[0]) ? StringType : Float64ArrayType;
+
+    switch (dataType) {
+        case StringType:
+            return websocket_getString_perf(csound, p);
+        case Float64ArrayType:
+            return websocket_getArray_perf(csound, p);
+        default:
+            break;
+    }
 
     return OK;
 }
