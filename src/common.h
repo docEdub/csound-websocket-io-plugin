@@ -15,7 +15,7 @@ const int WebsocketInitialMessageSize;
 
 enum {
     StringType = 1,
-    Float64ArrayType = 2
+    FloatArrayType = 2
 };
 
 typedef struct PortKey

@@ -47,7 +47,7 @@ int32_t websocket_set_init(CSOUND *csound, WS_set *p)
 
     const CS_TYPE *type = csound->GetTypeForArg(p->input);
     const char *typeName = type->varTypeName;
-    const uint8_t dataType = ('S' == typeName[0]) ? StringType : Float64ArrayType;
+    const uint8_t dataType = ('S' == typeName[0]) ? StringType : FloatArrayType;
 
     p->msgPreSize = pathLength + 2; // Path length + null terminator + data type.
     p->msgPre = csound->Calloc(csound, p->msgPreSize);
@@ -59,7 +59,7 @@ int32_t websocket_set_init(CSOUND *csound, WS_set *p)
     *d = dataType;
 
     switch (dataType) {
-        case Float64ArrayType:
+        case FloatArrayType:
             return websocket_setArray_perf(csound, p);
         case StringType:
             return websocket_setString_perf(csound, p);
@@ -76,7 +76,7 @@ static void writeWebsocketPathDataMessage(CSOUND *csound, CS_HASH_TABLE *pathHas
 
     csound->LockMutex(pathData->messageMutex);
 
-    const size_t msgSize = p->msgPreSize + dataSize + ((Float64ArrayType == dataType) ? 4 : 0);
+    const size_t msgSize = p->msgPreSize + dataSize + ((FloatArrayType == dataType) ? 4 : 0);
 
     // NB: malloc is used instead of csound->Malloc because csound->Free crashes after the buffer is given to lws_write.
     WebsocketMessage *msg = &pathData->message;
@@ -90,8 +90,8 @@ static void writeWebsocketPathDataMessage(CSOUND *csound, CS_HASH_TABLE *pathHas
     memcpy(d, p->msgPre, p->msgPreSize); // Path and data type.
     d += p->msgPreSize;
 
-    if (Float64ArrayType == dataType) {
-        *((uint32_t*) d) = dataSize / sizeof(double); // Array length.
+    if (FloatArrayType == dataType) {
+        *((uint32_t*) d) = dataSize / sizeof(MYFLT); // Array length.
         d += 4;
     }
 
@@ -104,7 +104,7 @@ static void writeWebsocketPathDataMessage(CSOUND *csound, CS_HASH_TABLE *pathHas
 
 int32_t websocket_setArray_perf(CSOUND *csound, WS_set *p) {
     ARRAYDAT *input = p->input;
-    writeWebsocketPathDataMessage(csound, p->common.websocket->pathSetFloatsHashTable, p, Float64ArrayType, input->data, input->allocated);
+    writeWebsocketPathDataMessage(csound, p->common.websocket->pathSetFloatsHashTable, p, FloatArrayType, input->data, input->allocated);
     return OK;
 }
 

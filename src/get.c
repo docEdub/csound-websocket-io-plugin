@@ -58,11 +58,11 @@ int32_t onWebsocketReceive(struct lws *websocket, void *inputData, size_t inputD
 
         // Write the data to the path's message buffer.
         switch (type) {
-        case Float64ArrayType: {
+        case FloatArrayType: {
             const uint32_t *length = (uint32_t*) d;
             d += 4;
             pathData = getWebsocketPathData(csound, ws->pathGetFloatsHashTable, path);
-            bufferSize = *length * sizeof(double);
+            bufferSize = *length * sizeof(MYFLT);
             break;
         }
         case StringType: {
@@ -107,12 +107,12 @@ int32_t websocket_get_init(CSOUND *csound, WS_get *p)
 
     const CS_TYPE *type = csound->GetTypeForArg(p->output);
     const char *typeName = type->varTypeName;
-    const uint8_t dataType = ('S' == typeName[0]) ? StringType : Float64ArrayType;
+    const uint8_t dataType = ('S' == typeName[0]) ? StringType : FloatArrayType;
 
     switch (dataType) {
         case StringType:
             return websocket_getString_perf(csound, p);
-        case Float64ArrayType:
+        case FloatArrayType:
             return websocket_getArray_perf(csound, p);
         default:
             break;
@@ -149,7 +149,7 @@ void static readWebsocketPathDataMessage(CSOUND *csound, CS_HASH_TABLE *pathHash
     void *outputData = NULL;
     const size_t size = msg->size;
 
-    if (Float64ArrayType == dataType) {
+    if (FloatArrayType == dataType) {
         ARRAYDAT *output = p->output;
         if (output->allocated < size) {
             csound->Free(csound, output->data);
@@ -176,7 +176,7 @@ void static readWebsocketPathDataMessage(CSOUND *csound, CS_HASH_TABLE *pathHash
 
 int32_t websocket_getArray_perf(CSOUND *csound, WS_get *p)
 {
-    readWebsocketPathDataMessage(csound, p->common.websocket->pathGetFloatsHashTable, p, Float64ArrayType);
+    readWebsocketPathDataMessage(csound, p->common.websocket->pathGetFloatsHashTable, p, FloatArrayType);
     return OK;
 }
 

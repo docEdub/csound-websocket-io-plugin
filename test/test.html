@@ -11,7 +11,7 @@
 var websocket = new WebSocket("ws://127.0.0.1:12345", "csound");
 
 const StringType = 1;
-const Float64ArrayType = 2;
+const FloatArrayType = 2;
 
 const sendBuffer = new ArrayBuffer(1024);
 const sendBuffer_asUint8s = new Uint8Array(sendBuffer);
@@ -60,7 +60,7 @@ setInterval(() => {
             sendBuffer_asUint8s[written++] = 0;
 
             // Add the data type.
-            sendBuffer_asUint8s[written++] = Float64ArrayType;
+            sendBuffer_asUint8s[written++] = FloatArrayType;
 
             // // Add the array length.
             sendBufferDataView.setUint32(written, test2_data.length, true);
@@ -126,7 +126,7 @@ websocket.onmessage = async (event) => {
     const dataType = dataView.getUint8(i);
     console.log(`   i = ${i}, data type = ${dataType}`);
 
-    if (Float64ArrayType === dataType) {
+    if (FloatArrayType === dataType) {
         // Set i to index of array length.
         i++;
 
