@@ -11,14 +11,14 @@ kr = 1
 
 instr 1
     SValue init ""
-    kValue[] init 3
+    kValue[] init 1
 
     SValue = websocket_getString_k(12345, "/test/1")
     kValue = websocket_getArray_k(12345, "/test/2")
 
     if (changed2(kValue) == 1) then
-        printsk("websocket_get... SValue = %s: ", SValue)
-        printsk("websocket_get... ")
+        printsk("instr 1 ...\n")
+        printsk("  websocket_get... SValue = %s: ", SValue)
         ki = 0
         printsk("kValue = [ ");
         while (ki < lenarray:k(kValue)) do
@@ -49,7 +49,7 @@ instr 3
     SValue = websocket_getString_i(12345, "/test/1")
     iValue = websocket_getArray_i(12345, "/test/2")
 
-    prints("websocket_get... SValue = %s: ", SValue)
+    prints("  websocket_get... SValue = %s: ", SValue)
     ii = 0
     prints("kValue = [ ");
     while (ii < lenarray:i(iValue)) do
@@ -73,7 +73,6 @@ instr 4
 endin
 
 instr 5
-    printsk("instr 5 ...\n")
     event("i", 3, 0, .1)
     event("i", 4, 0, .1)
 endin

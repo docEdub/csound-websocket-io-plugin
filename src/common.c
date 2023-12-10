@@ -17,15 +17,15 @@ static void destroyWebsocketPathHashTable(CSOUND *csound, CS_HASH_TABLE *pathHas
     while (pathItem) {
         WebsocketPathData *pathData = pathItem->value;
 
-        for (int i = 0; i < WebsocketBufferCount; i++) {
-            WebsocketMessage *msg = pathData->messages + i;
-            // NB: free is used instead of csound->Free because csound->Free crashes after the buffer is given to lws_write.
-            free(msg->buffer);
-            msg->size = 0;
-        }
+        // NB: free is used instead of csound->Free because csound->Free crashes after the buffer is given to lws_write.
+        free(pathData->message.buffer);
+        pathData->message.size = 0;
 
-        csound->Free(csound, pathData->messages);
-        csound->DestroyCircularBuffer(csound, pathData->messageIndexCircularBuffer);
+        csound->Free(csound, pathData->previousMessage.buffer);
+        pathData->previousMessage.size = 0;
+
+        csound->DestroyMutex(pathData->previousMessageMutex);
+        csound->DestroyMutex(pathData->messageMutex);
         csound->Free(csound, pathData);
 
         pathItem = pathItem->next;
@@ -93,8 +93,8 @@ static SharedWebsocketData *getSharedData(CSOUND *csound)
 static WebsocketPathData *createWebsocketPathData(CSOUND *csound)
 {
     WebsocketPathData *pathData = csound->Calloc(csound, sizeof(WebsocketPathData));
-    pathData->messageIndexCircularBuffer = csound->CreateCircularBuffer(csound, WebsocketBufferCount, sizeof(pathData->messageIndex));
-    pathData->messages = csound->Calloc(csound, sizeof(WebsocketMessage) * WebsocketBufferCount);
+    pathData->messageMutex = csound->Create_Mutex(false);
+    pathData->previousMessageMutex = csound->Create_Mutex(false);
     return pathData;
 }
 
@@ -216,23 +216,6 @@ WebsocketPathData *getWebsocketPathData(CSOUND *csound, CS_HASH_TABLE *pathHashT
     }
 
     return pathData;
-}
-
-void writeWebsocketPathDataMessageIndex(CSOUND *csound, WebsocketPathData *pathData)
-{
-    while (true) {
-        int written = csound->WriteCircularBuffer(csound, pathData->messageIndexCircularBuffer, &pathData->messageIndex, 1);
-        if (written != 0) {
-            break;
-        }
-
-        // Message index buffer full. Read 1 item to free up room for the new message index.
-        int unused;
-        csound->ReadCircularBuffer(csound, pathData->messageIndexCircularBuffer, &unused, 1);
-    }
-
-    pathData->messageIndex++;
-    pathData->messageIndex %= WebsocketBufferCount;
 }
 
 int32_t noop_perf(CSOUND *csound, void *p)

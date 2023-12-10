@@ -2,23 +2,14 @@
 
 static void sendWebsocketPathData(CSOUND *csound, struct lws *websocket, WebsocketPathData *pathData)
 {
-    while (true) {
-        int messageIndex = -1;
-        const int read = csound->ReadCircularBuffer(csound, pathData->messageIndexCircularBuffer, &messageIndex, 1);
-        if (read == 1) {
-            // Make sure we're reading the most recent message to send to the websocket.
-            int unused = -1;
-            if (csound->PeekCircularBuffer(csound, pathData->messageIndexCircularBuffer, &unused, 1)) {
-                continue;
-            }
+    csound->LockMutex(pathData->messageMutex);
 
-            WebsocketMessage *msg = pathData->messages + messageIndex;
-            lws_write(websocket, (unsigned char*) msg->buffer, msg->size, LWS_WRITE_BINARY);
-        }
-        else {
-            break;
-        }
+    if (!pathData->sent) {
+        lws_write(websocket, (unsigned char*) pathData->message.buffer, pathData->message.size, LWS_WRITE_BINARY);
+        pathData->sent = true;
     }
+
+    csound->UnlockMutex(pathData->messageMutex);
 }
 
 static void sendWebsocketPathHashTable(CSOUND *csound, struct lws *websocket, CS_HASH_TABLE *pathHashTable)
@@ -83,10 +74,12 @@ static void writeWebsocketPathDataMessage(CSOUND *csound, CS_HASH_TABLE *pathHas
 {
     WebsocketPathData *pathData = getWebsocketPathData(csound, pathHashTable, p->path->data);
 
+    csound->LockMutex(pathData->messageMutex);
+
     const size_t msgSize = p->msgPreSize + dataSize + ((Float64ArrayType == dataType) ? 4 : 0);
 
     // NB: malloc is used instead of csound->Malloc because csound->Free crashes after the buffer is given to lws_write.
-    WebsocketMessage *msg = pathData->messages + pathData->messageIndex;
+    WebsocketMessage *const msg = &pathData->message;
     if (msg->size < msgSize) {
         free(msg->buffer);
         msg->buffer = malloc(2 * msgSize);
@@ -104,7 +97,9 @@ static void writeWebsocketPathDataMessage(CSOUND *csound, CS_HASH_TABLE *pathHas
 
     memcpy(d, data, dataSize); // Array or String data.
 
-    writeWebsocketPathDataMessageIndex(csound, pathData);
+    pathData->sent = false;
+
+    csound->UnlockMutex(pathData->messageMutex);
 }
 
 int32_t websocket_setArray_perf(CSOUND *csound, WS_set *p) {

@@ -30,9 +30,11 @@ typedef struct WebsocketMessage {
 } WebsocketMessage;
 
 typedef struct WebsocketPathData {
-    int messageIndex;
-    void *messageIndexCircularBuffer;
-    WebsocketMessage *messages;
+    void *messageMutex;
+    void *previousMessageMutex;
+    WebsocketMessage message;
+    WebsocketMessage previousMessage;
+    bool sent;
 } WebsocketPathData;
 
 typedef struct Websocket {
@@ -68,7 +70,6 @@ void initPortKey(PortKey *portKey, MYFLT port);
 Websocket *getWebsocket(CSOUND *csound, int port, WS_common *p);
 
 WebsocketPathData *getWebsocketPathData(CSOUND *csound, CS_HASH_TABLE *pathHashTable, char *path);
-void writeWebsocketPathDataMessageIndex(CSOUND *csound, WebsocketPathData *pathData);
 
 int32_t noop_perf(CSOUND *csound, void *p);
 

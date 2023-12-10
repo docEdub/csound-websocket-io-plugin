@@ -75,7 +75,9 @@ int32_t onWebsocketReceive(struct lws *websocket, void *inputData, size_t inputD
             return OK;
         }
 
-        WebsocketMessage *msg = pathData->messages + pathData->messageIndex;
+        WebsocketMessage *const msg = &pathData->message;
+
+        csound->LockMutex(pathData->messageMutex);
 
         // NB: malloc is used instead of csound->Malloc for consistency with the set opcodes because csound->Free crashes after the buffer is given to lws_write.
         if (0 < msg->size && msg->size < bufferSize) {
@@ -88,7 +90,7 @@ int32_t onWebsocketReceive(struct lws *websocket, void *inputData, size_t inputD
         }
         memcpy(msg->buffer, d, bufferSize);
 
-        writeWebsocketPathDataMessageIndex(csound, pathData);
+        csound->UnlockMutex(pathData->messageMutex);
     }
 
     return OK;
@@ -126,47 +128,50 @@ void static readWebsocketPathDataMessage(CSOUND *csound, CS_HASH_TABLE *pathHash
         return;
     }
 
-    while (true) {
-        int messageIndex = -1;
-        const int read = csound->ReadCircularBuffer(csound, pathData->messageIndexCircularBuffer, &messageIndex, 1);
-        if (read == 1) {
-            // Advanced to the most recent message sent to the websocket.
-            int unused = -1;
-            if (csound->PeekCircularBuffer(csound, pathData->messageIndexCircularBuffer, &unused, 1)) {
-                continue;
-            }
+    csound->LockMutex(pathData->previousMessageMutex);
 
-            WebsocketMessage *msg = pathData->messages + messageIndex;
-            void *outputData = NULL;
-            size_t size = msg->size;
-
-            if (Float64ArrayType == dataType) {
-                ARRAYDAT *output = p->output;
-                if (output->allocated < size) {
-                    csound->Free(csound, output->data);
-                    output->data = csound->Malloc(csound, 2 * size);
-                    output->allocated = 2 * size;
-                }
-                outputData = output->data;
-            }
-            else if (StringType == dataType) {
-                STRINGDAT *output = p->output;
-                if (output->size < (int)size) {
-                    csound->Free(csound, output->data);
-                    output->data = csound->Malloc(csound, 2 * size);
-                    output->size = 2 * size;
-                }
-                outputData = output->data;
-            }
-
-            memcpy(outputData, msg->buffer, size);
-
-            break;
+    if (0 == csound->LockMutexNoWait(pathData->messageMutex)) {
+        // Copy the message to the previous message buffer.
+        WebsocketMessage *const msg = &pathData->message;
+        WebsocketMessage *const prevMsg = &pathData->previousMessage;
+        if (2 * prevMsg->size < msg->size) {
+            csound->Free(csound, prevMsg->buffer);
+            prevMsg->buffer = csound->Malloc(csound, 2 * msg->size);
+            prevMsg->size = msg->size;
         }
-        else {
-            break;
-        }
+        memcpy(prevMsg->buffer, msg->buffer, msg->size);
+
+        csound->UnlockMutex(pathData->messageMutex);
     }
+
+    // Copy previous message to output.
+    WebsocketMessage *const msg = &pathData->previousMessage;
+    void *outputData = NULL;
+    const size_t size = msg->size;
+
+    if (Float64ArrayType == dataType) {
+        ARRAYDAT *output = p->output;
+        if (output->allocated < size) {
+            csound->Free(csound, output->data);
+            output->data = csound->Calloc(csound, 2 * size);
+            output->allocated = 2 * size;
+            output->sizes[0] = size / sizeof(MYFLT);
+        }
+        outputData = output->data;
+    }
+    else if (StringType == dataType) {
+        STRINGDAT *output = p->output;
+        if (output->size < (int) size) {
+            csound->Free(csound, output->data);
+            output->data = csound->Calloc(csound, 2 * size);
+            output->size = 2 * size;
+        }
+        outputData = output->data;
+    }
+
+    memcpy(outputData, msg->buffer, size);
+
+    csound->UnlockMutex(pathData->previousMessageMutex);
 }
 
 int32_t websocket_getArray_perf(CSOUND *csound, WS_get *p)
