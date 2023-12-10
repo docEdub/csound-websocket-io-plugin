@@ -79,7 +79,7 @@ static void writeWebsocketPathDataMessage(CSOUND *csound, CS_HASH_TABLE *pathHas
     const size_t msgSize = p->msgPreSize + dataSize + ((Float64ArrayType == dataType) ? 4 : 0);
 
     // NB: malloc is used instead of csound->Malloc because csound->Free crashes after the buffer is given to lws_write.
-    WebsocketMessage *const msg = &pathData->message;
+    WebsocketMessage *msg = &pathData->message;
     if (msg->size < msgSize) {
         free(msg->buffer);
         msg->buffer = malloc(2 * msgSize);
@@ -91,7 +91,7 @@ static void writeWebsocketPathDataMessage(CSOUND *csound, CS_HASH_TABLE *pathHas
     d += p->msgPreSize;
 
     if (Float64ArrayType == dataType) {
-        *(uint32_t*)(d) = dataSize / sizeof(MYFLT); // Array length.
+        *((uint32_t*) d) = dataSize / sizeof(double); // Array length.
         d += 4;
     }
 

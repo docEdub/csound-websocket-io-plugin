@@ -161,7 +161,7 @@ Websocket *getWebsocket(CSOUND *csound, int port, WS_common *p)
 
     SharedWebsocketData *shared = getSharedData(csound);
 
-    char *hashTablePortKey = csound->GetHashTableKey(csound, shared->portWebsocketHashTable, (char*)&p->portKey);
+    char *hashTablePortKey = csound->GetHashTableKey(csound, shared->portWebsocketHashTable, (char*) &p->portKey);
     if (hashTablePortKey) {
         ws = csound->GetHashTableValue(csound, shared->portWebsocketHashTable, hashTablePortKey);
         ws->refCount++;
@@ -176,7 +176,7 @@ Websocket *getWebsocket(CSOUND *csound, int port, WS_common *p)
     ws->pathSetStringHashTable = csound->CreateHashTable(csound);
     ws->refCount = 1;
 
-    csound->SetHashTableValue(csound, shared->portWebsocketHashTable, (char*)&p->portKey, ws);
+    csound->SetHashTableValue(csound, shared->portWebsocketHashTable, (char*) &p->portKey, ws);
 
     // Allocate 2 protocols; the actual protocol, and a null protocol at the end. It's a libwebsocket thing.
     ws->protocols = csound->Calloc(csound, sizeof(struct lws_protocols) * 2);

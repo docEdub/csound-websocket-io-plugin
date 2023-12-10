@@ -59,7 +59,7 @@ int32_t onWebsocketReceive(struct lws *websocket, void *inputData, size_t inputD
         // Write the data to the path's message buffer.
         switch (type) {
         case Float64ArrayType: {
-            const uint32_t *length = (uint32_t*)d;
+            const uint32_t *length = (uint32_t*) d;
             d += 4;
             pathData = getWebsocketPathData(csound, ws->pathGetFloatsHashTable, path);
             bufferSize = *length * sizeof(double);
@@ -75,7 +75,7 @@ int32_t onWebsocketReceive(struct lws *websocket, void *inputData, size_t inputD
             return OK;
         }
 
-        WebsocketMessage *const msg = &pathData->message;
+        WebsocketMessage *msg = &pathData->message;
 
         csound->LockMutex(pathData->messageMutex);
 
@@ -132,8 +132,8 @@ void static readWebsocketPathDataMessage(CSOUND *csound, CS_HASH_TABLE *pathHash
 
     if (0 == csound->LockMutexNoWait(pathData->messageMutex)) {
         // Copy the message to the previous message buffer.
-        WebsocketMessage *const msg = &pathData->message;
-        WebsocketMessage *const prevMsg = &pathData->previousMessage;
+        WebsocketMessage *msg = &pathData->message;
+        WebsocketMessage *prevMsg = &pathData->previousMessage;
         if (2 * prevMsg->size < msg->size) {
             csound->Free(csound, prevMsg->buffer);
             prevMsg->buffer = csound->Malloc(csound, 2 * msg->size);
@@ -145,7 +145,7 @@ void static readWebsocketPathDataMessage(CSOUND *csound, CS_HASH_TABLE *pathHash
     }
 
     // Copy previous message to output.
-    WebsocketMessage *const msg = &pathData->previousMessage;
+    WebsocketMessage *msg = &pathData->previousMessage;
     void *outputData = NULL;
     const size_t size = msg->size;
 
