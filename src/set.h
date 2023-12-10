@@ -8,10 +8,10 @@ typedef struct WS_set
     OPDS h;
     MYFLT *port;
     STRINGDAT *path;
-    void *input; // STRINGDAT* or ARRAYDAT*
-    PortKey portKey;
-    CSOUND *csound;
-    Websocket *websocket;
+    void *input; // ARRAYDAT * or STRINGDAT*
+    WS_common common;
+    char *msgPre; // path + '\0 + data type + data { (uint32 array length + array values) or (string) }.
+    size_t msgPreSize;
 } WS_set;
 
 int32_t websocket_set_init(CSOUND *csound, WS_set *p);

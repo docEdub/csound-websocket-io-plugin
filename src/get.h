@@ -6,12 +6,10 @@
 typedef struct WS_get
 {
     OPDS h;
-    void *output; // STRINGDAT* or ARRAYDAT*
+    void *output; // ARRAYDAT* or STRINGDAT*
     MYFLT *port;
     STRINGDAT *path;
-    PortKey portKey;
-    CSOUND *csound;
-    Websocket *websocket;
+    WS_common common;
 } WS_get;
 
 int32_t websocket_get_init(CSOUND *csound, WS_get *p);
