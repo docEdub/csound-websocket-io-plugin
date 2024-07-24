@@ -1,24 +1,24 @@
 <CsoundSynthesizer>
 <CsOptions>
--n -d -M0 -+rtmidi=NULL --midi-key-cps=4 --midi-velocity-amp=5 -+msg_color=false
+-n -d -M0 -+rtmidi=NULL --midi-key-cps=4 --midi-velocity-amp=5 -+msg_color=false -odac
 </CsOptions>
 <CsInstruments>
 
 nchnls = 1
 sr = 48000
-kr = 1
+kr = 4800
 0dbfs = 1
 
 instr 1
-    SValue init ""
+    ; SValue init ""
     kValue[] init 1
 
-    SValue = websocket_getString_k(12345, "/test/1")
+    ; SValue = websocket_getString_k(12345, "/test/1")
     kValue = websocket_getArray_k(12345, "/test/2")
 
     if (changed2(kValue) == 1) then
         printsk("instr 1 ...\n")
-        printsk("  websocket_get... SValue = %s: ", SValue)
+        ; printsk("  websocket_get... SValue = %s: ", SValue)
         ki = 0
         printsk("kValue = [ ");
         while (ki < lenarray:k(kValue)) do
@@ -80,9 +80,10 @@ endin
 </CsInstruments>
 <CsScore>
 
-i1 0 -1
-i2 0 -1
-i5 0 10
+i1 0 3600
+; i1 0 -1
+; i2 0 -1
+; i5 0 10
 
 </CsScore>
 </CsoundSynthesizer>

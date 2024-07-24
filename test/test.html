@@ -8,7 +8,7 @@
 <body>
 <script>
 
-var websocket = new WebSocket("ws://127.0.0.1:12345", "csound");
+var websocket = new WebSocket("ws://127.0.0.1:12345/", "csound");
 
 const StringType = 1;
 const FloatArrayType = 2;
@@ -62,7 +62,7 @@ setInterval(() => {
             // Add the data type.
             sendBuffer_asUint8s[written++] = FloatArrayType;
 
-            // // Add the array length.
+            // Add the array length.
             sendBufferDataView.setUint32(written, test2_data.length, true);
             written += 4;
 
