@@ -65,12 +65,16 @@ static int32_t resetSharedData(CSOUND *csound, void *vshared)
     CONS_CELL *websocketItem = csound->GetHashTableValues(csound, shared->portWebsocketHashTable);
     while (websocketItem) {
         Websocket *ws = websocketItem->value;
-        releaseWebsocket(csound, ws);
-        websocketItem = websocketItem->next;
+        ws->refCount--;
+        if (ws->refCount == 0) {
+            releaseWebsocket(csound, ws);
+            websocketItem = websocketItem->next;
+        }
     }
 
     csound->DestroyHashTable(csound, shared->portWebsocketHashTable);
     csound->DestroyGlobalVariable(csound, SharedWebsocketDataGlobalVariableName);
+
     return OK;
 }
 
